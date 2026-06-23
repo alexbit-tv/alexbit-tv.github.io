@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Радио AlexBit — слушать онлайн</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(ellipse at 50% 0%, #1a1a3e 0%, #0d0d1a 60%, #000 100%);
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: #f8961d;
+      filter: blur(120px);
+      opacity: 0.08;
+      top: -200px;
+      right: -200px;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: #6c3ce0;
+      filter: blur(120px);
+      opacity: 0.08;
+      bottom: -200px;
+      left: -200px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .radio-wrapper {
+      max-width: 720px;
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-radius: 48px;
+      padding: 36px 28px 30px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      z-index: 1;
+    }
+
+    .radio-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .radio-header img {
+      height: 52px;
+      width: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .radio-header .title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .radio-header .title span { color: #f8961d; }
+    .radio-header .sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ===== БЕГУЩАЯ СТРОКА (из оригинального кода) ===== */
+    .marquee {
+      position: relative;
+      overflow: hidden;
+      height: 3.4rem;
+      display: flex;
+      align-items: center;
+      font: 600 0.95rem/3.4rem system-ui, sans-serif;
+      color: #f5f5f7;
+      user-select: none;
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border-radius: 18px 18px 0 0;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-bottom: none;
+    }
+    .marquee__label {
+      color: #f8961d;
+      flex-shrink: 0;
+      padding: 0 1rem;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .marquee__scroll {
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      height: 100%;
+    }
+    .marquee__track {
+      position: absolute;
+      will-change: transform, opacity;
+      display: inline-flex;
+      align-items: center;
+      transform: translateX(0);
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity 0.5s;
+    }
+    .marquee__track.fade-out { opacity: 0; }
+    .marquee__copy { padding: 0 0.75rem; white-space: nowrap; }
+
+    /* ===== ПЛЕЕР (оригинальный от MyRadioStream) ===== */
+    .player-area {
+      background: rgba(0,0,0,0.45);
+      border-radius: 0 0 18px 18px;
+      padding: 12px 12px 16px;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-top: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Контейнер для кнопки и визуализации */
+    #mixstream-player {
+      height: 80px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .mixstream-player-text { color: #fff; }
+
+    /* Барсы (визуализация) */
+    #mixstream-bars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      opacity: 0.7;
+      margin-left: 80px;
+    }
+    #meter {
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+    }
+
+    /* Кнопка Play/Stop (взята из оригинального кода) */
+    #mixstream-btn-playstop {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+    }
+    #mixstream-icon-playstop {
+      border-radius: 100%;
+      color: #fff;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8961d;
+      box-shadow: 0 4px 20px rgba(248,150,29,0.3);
+      transition: all 0.3s;
+    }
+    #mixstream-icon-playstop:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 30px rgba(248,150,29,0.5);
+    }
+    #mixstream-icon-playstop i {
+      font-size: 32px;
+      color: #fff;
+    }
+
+    /* Статус */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+    }
+    .status-bar .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+    .status-bar .dot.on {
+      background: #2ecc71;
+      box-shadow: 0 0 20px rgba(46,204,113,0.3);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .status-bar .dot.off {
+      background: #e74c3c;
+      box-shadow: 0 0 20px rgba(231,76,60,0.15);
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .status-bar .label.on { color: #2ecc71; }
+    .status-bar .label.off { color: #e74c3c; }
+
+    .btn-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      padding: 12px 32px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 50px;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+      letter-spacing: 0.3px;
+    }
+    .btn-main:hover {
+      background: rgba(248,150,29,0.1);
+      border-color: rgba(248,150,29,0.2);
+      color: #f8961d;
+      transform: translateY(-2px);
+    }
+    .btn-main i { transition: transform 0.3s; }
+    .btn-main:hover i { transform: translateX(-3px); }
+
+    /* Скрытые элементы (для работы скрипта) */
+    #mixstream-audio-content { display: none; }
+    #mixstream-play, #mixstream-stop { display: none; }
+    #mixstream-status, #mixstream-clipped, #mixstream-playtimer { display: none; }
+    .loader { display: none; }
+
+    @media (max-width: 640px) {
+      .radio-wrapper { padding: 20px 14px 16px; border-radius: 32px; }
+      .radio-header .title { font-size: 20px; }
+      .radio-header img { height: 40px; }
+      .marquee { height: 2.8rem; font-size: 0.8rem; }
+      #mixstream-player { height: 60px; }
+      #mixstream-icon-playstop { width: 44px; height: 44px; }
+      #mixstream-icon-playstop i { font-size: 24px; }
+      #mixstream-bars { margin-left: 64px; }
+    }
+    @media (max-width: 400px) {
+      .radio-header .title { font-size: 18px; }
+      #mixstream-player { height: 50px; }
+      #mixstream-icon-playstop { width: 36px; height: 36px; }
+      #mixstream-icon-playstop i { font-size: 20px; }
+      #mixstream-bars { margin-left: 52px; gap: 3px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="radio-wrapper">
+  <div class="radio-header">
+    <img src="https://i.ibb.co/RG1zvnp7/image.webp" alt="AlexBit" />
+    <div>
+      <div class="title">Alex<span>Bit</span></div>
+      <div class="sub">Радио · 24/7</div>
+    </div>
+  </div>
+
+  <!-- БЕГУЩАЯ СТРОКА -->
+  <div class="marquee">
+    <span class="marquee__label">Сейчас играет:</span>
+    <div class="marquee__scroll">
+      <div class="marquee__track" id="track">Загрузка...</div>
+    </div>
+  </div>
+
+  <!-- ПЛЕЕР -->
+  <div class="player-area">
+    <div id="mixstream-player" data-type="audio/mpeg" data-clipwarn="1" data-height="80">
+      <!-- Кнопка Play/Stop -->
+      <div id="mixstream-btn-playstop">
+        <div id="mixstream-icon-playstop">
+          <i class="fa-thin fa-play" id="mixstream-play-icon"></i>
+        </div>
+      </div>
+
+      <!-- Визуализация -->
+      <div id="mixstream-bars">
+        <canvas id="meter"></canvas>
+      </div>
+
+      <!-- Скрытые элементы для работы скрипта -->
+      <div id="mixstream-play"><i class="fa-thin fa-play-circle"></i></div>
+      <div id="mixstream-stop"><i class="fa-thin fa-stop-circle"></i></div>
+      <div id="mixstream-status"></div>
+      <div id="mixstream-clipped"></div>
+      <div id="mixstream-playtimer"></div>
+    </div>
+
+    <!-- Статус -->
+    <div class="status-bar">
+      <span class="dot off" id="statusDot"></span>
+      <span class="label off" id="statusText">Остановлено</span>
+    </div>
+  </div>
+
+  <a href="/" class="btn-main"><i class="fas fa-arrow-left"></i> На главную</a>
+</div>
+
+<!-- Контейнер для аудио (скрыт) -->
+<div id="mixstream-audio-content"></div>
+
+<script>
+  // ================================================================
+  // КОНФИГУРАЦИЯ (из оригинального кода)
+  // ================================================================
+  const token = '?gGoXOW6ZSIDeqpvqhzWYmvP-Wb61I92Hb_XepJKfKxtZAa8N';
+  const data = {
+    "url": "http://37.59.41.148:21088/;",
+    "base": "//s23.myradiostream.com:21088/",
+    "h": "s23",
+    "s": "615635",
+    "p": "21088",
+    "name": "My Radio Stream",
+    "playercol": "333333"
+  };
+
+  // ================================================================
+  // ПЛЕЕР (оригинальный код от MyRadioStream)
+  // ================================================================
+  function initPlayer(data) {
+    const msplayer = document.getElementById('mixstream-player');
+    let playerheight = msplayer.clientHeight || 80;
+    let playerwidth = msplayer.clientWidth || 400;
+
+    const barcol = '#f8961d';
+    const btnsize = Math.min(56, playerheight * 0.7);
+
+    // Создаём аудио элемент
+    let el = document.createElement('div');
+    el.id = 'mixstream-audio-content';
+    document.body.appendChild(el);
+
+    const msaudiourl_initial = data.url + token;
+    document.getElementById('mixstream-audio-content').innerHTML =
+      `<video id="mixstream-audio" controls preload="none" style="width:1px;height:1px;">
+         <source id="mixstream-audio-src" src="${msaudiourl_initial}" type="${msplayer.getAttribute('data-type')}" />
+       </video>`;
+
+    const msaudio = document.getElementById('mixstream-audio');
+    let streaming = false;
+    let playing = false;
+    let played = false;
+    let autoreconnect = true;
+
+    // Настройка визуализации
+    const canvas = document.getElementById("meter");
+    const ctx = canvas.getContext("2d");
+    canvas.width = playerwidth - btnsize - 30;
+    canvas.height = playerheight * 0.6;
+
+    const barWidth = 4;
+    const gap = 6;
+    const numBars = Math.floor(canvas.width / (barWidth + gap));
+    const minHeight = canvas.height * 0.04;
+    let bars = new Array(numBars).fill(minHeight);
+    const centerY = canvas.height / 2;
+    const rgb = { r: 248, g: 150, b: 29 };
+
+    let lastTimestamp = null;
+    let timeSinceLastBar = 0;
+    const barsPerSecond = 10;
+    const step = barWidth + gap;
+    const fadeWidth = 50;
+    const fadeExponent = 0.15;
+    const AUDIO_LEVEL = 0.05;
+
+    function drawVisualizer(timestamp) {
+      if (typeof timestamp !== "number") {
+        requestAnimationFrame(drawVisualizer);
+        return;
+      }
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      timeSinceLastBar += dt;
+      const interval = 1 / barsPerSecond;
+      while (timeSinceLastBar >= interval) {
+        bars.shift();
+        bars.push(Math.max(AUDIO_LEVEL * canvas.height, minHeight));
+        timeSinceLastBar -= interval;
+      }
+
+      const offset = (timeSinceLastBar / interval) * step;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      bars.forEach((h, i) => {
+        const x = i * step - offset;
+        let scale = 1;
+        let alpha = Math.min(1, h / centerY);
+
+        if (x < fadeWidth) {
+          const leftRatio = Math.max(0, x / fadeWidth);
+          const leftScale = Math.pow(leftRatio, fadeExponent);
+          scale = Math.min(scale, leftScale);
+          alpha *= leftScale;
+        }
+
+        const height = h * 2 * scale;
+        const y = centerY - height / 2;
+        const radius = Math.min(barWidth / 2, height / 2);
+
+        ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.rect(x, y, barWidth, height);
+        ctx.fill();
+      });
+
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      gradient.addColorStop(0, 'rgba(0,0,0,0)');
+      gradient.addColorStop(fadeWidth / canvas.width, 'rgba(0,0,0,1)');
+      gradient.addColorStop(1 - fadeWidth / canvas.width, 'rgba(0,0,0,1)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+      ctx.fillStyle = gradient;
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(drawVisualizer);
+    }
+    drawVisualizer();
+
+    // Обработка кнопки Play/Stop
+    document.getElementById('mixstream-btn-playstop').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (playing) {
+        msaudio.pause();
+        document.getElementById('mixstream-icon-playstop').innerHTML = '<i class="fa-thin fa-play" id="mixstream-play-icon"></i>';
+        document.getElementById('mixstream-icon-playstop').style.background = '#f8961d';
+        playing = false;
+        updateStatus(false);
+      } else {
+        msaudio.play();
+        document.getElementById('mixstream-icon-playstop').innerHTML = '<i class="fa-thin fa-stop" id="mixstream-stop-icon"></i>';
+        document.getElementById('mixstream-icon-playstop').style.background = '#e74c3c';
+        playing = true;
+        updateStatus(true);
+      }
+    });
+
+    // События аудио
+    msaudio.onplay = function() {
+      streaming = true;
+      console.log('stream loaded');
+    };
+
+    msaudio.onerror = function() {
+      if (playing) {
+        console.warn('Ошибка потока, переподключаемся...');
+        setTimeout(() => {
+          const u = data.url + token + '?nocache=' + Date.now();
+          document.getElementById('mixstream-audio-src').src = u;
+          document.getElementById('mixstream-audio').load();
+          msaudio.play();
+        }, 3000);
+      }
+    };
+
+    // Автопереподключение
+    let lastTime = 0;
+    setInterval(function() {
+      if (playing && msaudio.currentTime <= lastTime) {
+        console.log('stream stopped: reload()');
+        const u = data.url + token + '?nocache=' + Date.now();
+        document.getElementById('mixstream-audio-src').src = u;
+        document.getElementById('mixstream-audio').load();
+        msaudio.play();
+      }
+      lastTime = msaudio.currentTime;
+    }, 6000);
+  }
+
+  // ================================================================
+  // ОБНОВЛЕНИЕ СТАТУСА
+  // ================================================================
+  function updateStatus(playing) {
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    if (playing) {
+      statusDot.className = 'dot on';
+      statusText.className = 'label on';
+      statusText.textContent = 'В эфире';
+    } else {
+      statusDot.className = 'dot off';
+      statusText.className = 'label off';
+      statusText.textContent = 'Остановлено';
+    }
+  }
+
+  // ================================================================
+  // БЕГУЩАЯ СТРОКА (получение названия трека)
+  // ================================================================
+  async function fetchNowPlaying() {
+    try {
+      const METADATA_URL = 'http://37.59.41.148:21088/status-json.xsl';
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(METADATA_URL);
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error('Status fetch failed');
+
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, 'text/xml');
+      const source = xmlDoc.querySelector('source');
+
+      if (source) {
+        const title = source.getAttribute('title');
+        if (title) {
+          const clean = title.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+          document.getElementById('track').textContent = clean || 'Станция не вещает';
+          return;
+        }
+      }
+      document.getElementById('track').textContent = 'Станция не вещает';
+    } catch (e) {
+      console.log('Не удалось получить название трека:', e);
+      document.getElementById('track').textContent = 'Сейчас играет...';
+    }
+  }
+
+  // ================================================================
+  // ЗАПУСК
+  // ================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    initPlayer(data);
+    fetchNowPlaying();
+    setInterval(fetchNowPlaying, 15000);
+  });
+</script>
+
+</body>
+</html>
